@@ -5,79 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Edit, Trash2, Search, Users, Building2 } from "lucide-react";
+import { useEmployeeContext } from "@/contexts/EmployeeContext";
 
 const EmployeeManagement = () => {
-  // Centralized departments list that syncs across components
-  const [departments] = useState([
-    "Plumbing", "Electrical", "Carpentry", "Masonry", "General Labor", "Roofing", "Painting"
-  ]);
-
-  const [employees, setEmployees] = useState([
-    {
-      id: 1,
-      name: "John Smith",
-      idNumber: "EMP001",
-      department: "Plumbing",
-      dailyWage: 180,
-      dateEmployed: "2023-01-15",
-      profilePhoto: "/placeholder.svg",
-    },
-    {
-      id: 2,
-      name: "Maria Garcia",
-      idNumber: "EMP002",
-      department: "Electrical",
-      dailyWage: 200,
-      dateEmployed: "2023-02-20",
-      profilePhoto: "/placeholder.svg",
-    },
-    {
-      id: 3,
-      name: "David Johnson",
-      idNumber: "EMP003",
-      department: "Carpentry",
-      dailyWage: 170,
-      dateEmployed: "2023-03-10",
-      profilePhoto: "/placeholder.svg",
-    },
-    {
-      id: 4,
-      name: "Sarah Wilson",
-      idNumber: "EMP004",
-      department: "Masonry",
-      dailyWage: 160,
-      dateEmployed: "2023-04-05",
-      profilePhoto: "/placeholder.svg",
-    },
-    {
-      id: 5,
-      name: "Mike Brown",
-      idNumber: "EMP005",
-      department: "General Labor",
-      dailyWage: 140,
-      dateEmployed: "2023-05-12",
-      profilePhoto: "/placeholder.svg",
-    },
-    {
-      id: 6,
-      name: "Alex Rodriguez",
-      idNumber: "EMP006",
-      department: "Roofing",
-      dailyWage: 185,
-      dateEmployed: "2023-06-18",
-      profilePhoto: "/placeholder.svg",
-    },
-    {
-      id: 7,
-      name: "Emma Thompson",
-      idNumber: "EMP007",
-      department: "Painting",
-      dailyWage: 155,
-      dateEmployed: "2023-07-22",
-      profilePhoto: "/placeholder.svg",
-    },
-  ]);
-
+  const { employees, departments, addEmployee, removeEmployee, getDepartmentStats } = useEmployeeContext();
+  
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [newEmployee, setNewEmployee] = useState({
@@ -95,13 +27,11 @@ const EmployeeManagement = () => {
 
   const handleAddEmployee = () => {
     if (newEmployee.name && newEmployee.idNumber && newEmployee.department) {
-      const employee = {
-        id: Math.max(...employees.map(e => e.id), 0) + 1,
+      addEmployee({
         ...newEmployee,
         dailyWage: parseInt(newEmployee.dailyWage),
         profilePhoto: "/placeholder.svg",
-      };
-      setEmployees([...employees, employee]);
+      });
       setNewEmployee({
         name: "",
         idNumber: "",
@@ -114,17 +44,7 @@ const EmployeeManagement = () => {
   };
 
   const handleDeleteEmployee = (id: number) => {
-    setEmployees(employees.filter(emp => emp.id !== id));
-  };
-
-  const getDepartmentStats = () => {
-    return departments.map(dept => ({
-      name: dept,
-      count: employees.filter(emp => emp.department === dept).length,
-      totalPayroll: employees
-        .filter(emp => emp.department === dept)
-        .reduce((sum, emp) => sum + (emp.dailyWage * 7), 0) // Assuming full week
-    }));
+    removeEmployee(id);
   };
 
   const departmentStats = getDepartmentStats();
@@ -222,18 +142,18 @@ const EmployeeManagement = () => {
               >
                 <option value="">Select Department</option>
                 {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
+                  <option key={dept.name} value={dept.name}>{dept.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label htmlFor="dailyWage" className="text-sm font-medium">Daily Wage ($)</Label>
+              <Label htmlFor="dailyWage" className="text-sm font-medium">Daily Wage (KES)</Label>
               <Input
                 id="dailyWage"
                 type="number"
                 value={newEmployee.dailyWage}
                 onChange={(e) => setNewEmployee({...newEmployee, dailyWage: e.target.value})}
-                placeholder="Enter daily wage"
+                placeholder="Enter daily wage in KES"
                 className="mt-1"
               />
             </div>
@@ -263,7 +183,7 @@ const EmployeeManagement = () => {
       {/* Employee List */}
       <div className="grid gap-4">
         {filteredEmployees.map((employee) => {
-          const deptIndex = departments.indexOf(employee.department);
+          const deptIndex = departments.findIndex(d => d.name === employee.department);
           const cardColors = [
             'border-l-blue-500 bg-blue-50',
             'border-l-green-500 bg-green-50',
@@ -290,9 +210,9 @@ const EmployeeManagement = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-green-600">${employee.dailyWage}/day</p>
+                  <p className="text-lg font-bold text-green-600">KES {employee.dailyWage.toLocaleString()}/day</p>
                   <p className="text-sm text-muted-foreground">Since: {employee.dateEmployed}</p>
-                  <p className="text-sm font-medium text-purple-600">Weekly: ${employee.dailyWage * 7}</p>
+                  <p className="text-sm font-medium text-purple-600">Weekly: KES {(employee.dailyWage * 7).toLocaleString()}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="hover:bg-blue-100">

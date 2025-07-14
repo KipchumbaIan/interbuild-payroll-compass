@@ -3,28 +3,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Calendar, Check, X, Search, Sun, Moon } from "lucide-react";
+import { useEmployeeContext } from "@/contexts/EmployeeContext";
 
 const AttendanceTracking = () => {
+  const { employees, getDepartmentStats } = useEmployeeContext();
   const [selectedWeek, setSelectedWeek] = useState(getWeekDates());
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Mock departments that should sync with employee management
-  const [departments] = useState([
-    "Plumbing", "Electrical", "Carpentry", "Masonry", "General Labor", "Roofing", "Painting"
-  ]);
-  
-  const [employees] = useState([
-    { id: 1, name: "John Smith", department: "Plumbing", dailyWage: 180 },
-    { id: 2, name: "Maria Garcia", department: "Electrical", dailyWage: 200 },
-    { id: 3, name: "David Johnson", department: "Carpentry", dailyWage: 170 },
-    { id: 4, name: "Sarah Wilson", department: "Masonry", dailyWage: 160 },
-    { id: 5, name: "Mike Brown", department: "General Labor", dailyWage: 140 },
-    { id: 6, name: "Alex Rodriguez", department: "Roofing", dailyWage: 185 },
-    { id: 7, name: "Emma Thompson", department: "Painting", dailyWage: 155 },
-  ]);
-
   const [attendance, setAttendance] = useState<{[key: string]: boolean}>({});
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -93,6 +78,7 @@ const AttendanceTracking = () => {
   };
 
   const stats = getWeeklyStats();
+  const departmentStats = getDepartmentStats();
 
   return (
     <div className="space-y-6 bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-6">
@@ -143,7 +129,7 @@ const AttendanceTracking = () => {
             <Moon className="h-8 w-8 mr-4" />
             <div>
               <p className="text-sm font-medium opacity-90">Weekly Payroll</p>
-              <p className="text-2xl font-bold">${stats.totalPayroll.toLocaleString()}</p>
+              <p className="text-2xl font-bold">KES {stats.totalPayroll.toLocaleString()}</p>
             </div>
           </div>
         </Card>
@@ -188,7 +174,7 @@ const AttendanceTracking = () => {
                   <div className="flex flex-col justify-center">
                     <div className="font-medium text-sm text-foreground">{employee.name}</div>
                     <div className="text-xs text-muted-foreground">{employee.department}</div>
-                    <div className="text-xs text-green-600 font-medium">${employee.dailyWage}/day</div>
+                    <div className="text-xs text-green-600 font-medium">KES {employee.dailyWage.toLocaleString()}/day</div>
                   </div>
 
                   {/* Daily Attendance Buttons */}
@@ -225,7 +211,7 @@ const AttendanceTracking = () => {
                   <div className="flex flex-col justify-center text-center bg-white rounded p-2">
                     <div className="text-sm font-bold text-green-600">{presentDays}/7 days</div>
                     <div className="text-xs text-muted-foreground">Present</div>
-                    <div className="text-sm font-bold text-blue-600">${weeklyPay}</div>
+                    <div className="text-sm font-bold text-blue-600">KES {weeklyPay.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Weekly Pay</div>
                   </div>
                 </div>
@@ -239,21 +225,21 @@ const AttendanceTracking = () => {
       <Card className="p-6 bg-white shadow-lg">
         <h2 className="text-xl font-semibold mb-4">Department Attendance Summary</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {departments.map((dept, index) => {
-            const deptEmployees = employees.filter(emp => emp.department === dept);
+          {departmentStats.map((dept, index) => {
+            const deptEmployees = employees.filter(emp => emp.department === dept.name);
             const deptPresentDays = deptEmployees.reduce((sum, emp) => sum + getPresentDaysCount(emp.id), 0);
             const deptTotalPossible = deptEmployees.length * 7;
             const deptPayroll = deptEmployees.reduce((sum, emp) => sum + getWeeklyPay(emp.id, emp.dailyWage), 0);
             const attendanceRate = deptTotalPossible > 0 ? (deptPresentDays / deptTotalPossible) * 100 : 0;
             
             return (
-              <div key={dept} className={`p-4 rounded-lg border-2 ${dayColors[index % dayColors.length]}`}>
-                <h3 className="font-semibold text-lg">{dept}</h3>
+              <div key={dept.name} className={`p-4 rounded-lg border-2 ${dayColors[index % dayColors.length]}`}>
+                <h3 className="font-semibold text-lg">{dept.name}</h3>
                 <div className="space-y-1 text-sm">
                   <p>Employees: {deptEmployees.length}</p>
                   <p>Present Days: {deptPresentDays}/{deptTotalPossible}</p>
                   <p>Attendance: {attendanceRate.toFixed(1)}%</p>
-                  <p className="font-bold">Payroll: ${deptPayroll.toLocaleString()}</p>
+                  <p className="font-bold">Payroll: KES {deptPayroll.toLocaleString()}</p>
                 </div>
               </div>
             );

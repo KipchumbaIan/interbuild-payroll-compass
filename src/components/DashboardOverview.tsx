@@ -1,30 +1,25 @@
 
 import { Card } from "@/components/ui/card";
 import { Users, Building2, DollarSign, Calendar } from "lucide-react";
+import { useEmployeeContext } from "@/contexts/EmployeeContext";
 
 const DashboardOverview = () => {
-  // Mock data for demonstration
-  const stats = {
-    totalEmployees: 45,
-    presentToday: 38,
-    totalDepartments: 5,
-    weeklyPayroll: 52750,
-  };
+  const { employees, getDepartmentStats } = useEmployeeContext();
+  
+  const departmentStats = getDepartmentStats();
+  const totalEmployees = employees.length;
+  const totalDepartments = departmentStats.filter(dept => dept.count > 0).length;
+  const totalWeeklyPayroll = departmentStats.reduce((sum, dept) => sum + dept.totalPayroll, 0);
+  
+  // Mock present today data - in real app would come from attendance tracking
+  const presentToday = Math.floor(totalEmployees * 0.85); // 85% attendance rate
 
-  const departmentStats = [
-    { name: "Plumbing", employees: 12, weeklyPayroll: 14400 },
-    { name: "Electrical", employees: 8, weeklyPayroll: 10800 },
-    { name: "Carpentry", employees: 15, weeklyPayroll: 18000 },
-    { name: "Masonry", employees: 7, weeklyPayroll: 7350 },
-    { name: "General Labor", employees: 3, weeklyPayroll: 2200 },
-  ];
-
-  const todayAttendance = [
-    { name: "John Smith", department: "Plumbing", dailyWage: 180, status: "Present" },
-    { name: "Maria Garcia", department: "Electrical", dailyWage: 200, status: "Present" },
-    { name: "David Johnson", department: "Carpentry", dailyWage: 170, status: "Absent" },
-    { name: "Sarah Wilson", department: "Masonry", dailyWage: 160, status: "Present" },
-  ];
+  const todayAttendance = employees.slice(0, 4).map(emp => ({
+    name: emp.name,
+    department: emp.department,
+    dailyWage: emp.dailyWage,
+    status: Math.random() > 0.2 ? "Present" : "Absent"
+  }));
 
   return (
     <div className="space-y-6">
@@ -40,7 +35,7 @@ const DashboardOverview = () => {
             <Users className="h-8 w-8 text-primary" />
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">Total Employees</p>
-              <p className="text-2xl font-bold text-foreground">{stats.totalEmployees}</p>
+              <p className="text-2xl font-bold text-foreground">{totalEmployees}</p>
             </div>
           </div>
         </Card>
@@ -50,7 +45,7 @@ const DashboardOverview = () => {
             <Calendar className="h-8 w-8 text-green-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">Present Today</p>
-              <p className="text-2xl font-bold text-foreground">{stats.presentToday}</p>
+              <p className="text-2xl font-bold text-foreground">{presentToday}</p>
             </div>
           </div>
         </Card>
@@ -59,8 +54,8 @@ const DashboardOverview = () => {
           <div className="flex items-center">
             <Building2 className="h-8 w-8 text-blue-600" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Departments</p>
-              <p className="text-2xl font-bold text-foreground">{stats.totalDepartments}</p>
+              <p className="text-sm font-medium text-muted-foreground">Active Departments</p>
+              <p className="text-2xl font-bold text-foreground">{totalDepartments}</p>
             </div>
           </div>
         </Card>
@@ -70,30 +65,40 @@ const DashboardOverview = () => {
             <DollarSign className="h-8 w-8 text-green-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">Weekly Payroll</p>
-              <p className="text-2xl font-bold text-foreground">${stats.weeklyPayroll.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-foreground">KES {totalWeeklyPayroll.toLocaleString()}</p>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Department Statistics */}
+      {/* All Departments Overview */}
       <Card className="p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Department Overview</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">All Departments Overview</h2>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b">
                 <th className="text-left py-2 font-medium text-muted-foreground">Department</th>
                 <th className="text-left py-2 font-medium text-muted-foreground">Employees</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Weekly Payroll</th>
+                <th className="text-left py-2 font-medium text-muted-foreground">Weekly Payroll (KES)</th>
+                <th className="text-left py-2 font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody>
               {departmentStats.map((dept, index) => (
                 <tr key={index} className="border-b">
                   <td className="py-3 font-medium text-foreground">{dept.name}</td>
-                  <td className="py-3 text-foreground">{dept.employees}</td>
-                  <td className="py-3 text-foreground">${dept.weeklyPayroll.toLocaleString()}</td>
+                  <td className="py-3 text-foreground">{dept.count}</td>
+                  <td className="py-3 text-foreground">KES {dept.totalPayroll.toLocaleString()}</td>
+                  <td className="py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      dept.count > 0 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {dept.count > 0 ? 'Active' : 'No Staff'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -110,7 +115,7 @@ const DashboardOverview = () => {
               <tr className="border-b">
                 <th className="text-left py-2 font-medium text-muted-foreground">Employee</th>
                 <th className="text-left py-2 font-medium text-muted-foreground">Department</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Daily Wage</th>
+                <th className="text-left py-2 font-medium text-muted-foreground">Daily Wage (KES)</th>
                 <th className="text-left py-2 font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
@@ -119,7 +124,7 @@ const DashboardOverview = () => {
                 <tr key={index} className="border-b">
                   <td className="py-3 font-medium text-foreground">{emp.name}</td>
                   <td className="py-3 text-foreground">{emp.department}</td>
-                  <td className="py-3 text-foreground">${emp.dailyWage}</td>
+                  <td className="py-3 text-foreground">KES {emp.dailyWage.toLocaleString()}</td>
                   <td className="py-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       emp.status === 'Present' 

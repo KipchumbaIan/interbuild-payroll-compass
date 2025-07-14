@@ -4,6 +4,7 @@ import { Users, Building2, Calendar, DollarSign, FileText, Menu } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { EmployeeProvider } from "@/contexts/EmployeeContext";
 import DashboardOverview from "@/components/DashboardOverview";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import DepartmentManagement from "@/components/DepartmentManagement";
@@ -68,36 +69,38 @@ const Index = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
-        <Sidebar />
-      </div>
+    <EmployeeProvider>
+      <div className="min-h-screen bg-background">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
+          <Sidebar />
+        </div>
 
-      {/* Mobile Header */}
-      <div className="md:hidden">
-        <div className="flex items-center justify-between p-4 border-b bg-card">
-          <h1 className="text-xl font-bold text-primary">Interbuild</h1>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64">
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
+        {/* Mobile Header */}
+        <div className="md:hidden">
+          <div className="flex items-center justify-between p-4 border-b bg-card">
+            <h1 className="text-xl font-bold text-primary">Interbuild</h1>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="md:pl-64">
+          <main className="p-6">
+            {renderContent()}
+          </main>
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="md:pl-64">
-        <main className="p-6">
-          {renderContent()}
-        </main>
-      </div>
-    </div>
+    </EmployeeProvider>
   );
 };
 
