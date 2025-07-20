@@ -1,144 +1,245 @@
 
-import { Card } from "@/components/ui/card";
-import { Users, Building2, DollarSign, Calendar } from "lucide-react";
-import { useEmployeeContext } from "@/contexts/EmployeeContext";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { Users, UserCheck, Building2, DollarSign } from "lucide-react";
+
+interface Employee {
+  id: string;
+  name: string;
+  department: string;
+  daily_wage: number;
+}
+
+interface Department {
+  name: string;
+  employee_count: number;
+  total_payroll: number;
+}
 
 const DashboardOverview = () => {
-  const { employees, getDepartmentStats } = useEmployeeContext();
-  
-  const departmentStats = getDepartmentStats();
-  const totalEmployees = employees.length;
-  const totalDepartments = departmentStats.filter(dept => dept.count > 0).length;
-  const totalWeeklyPayroll = departmentStats.reduce((sum, dept) => sum + dept.totalPayroll, 0);
-  
-  // Mock present today data - in real app would come from attendance tracking
-  const presentToday = Math.floor(totalEmployees * 0.85); // 85% attendance rate
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const todayAttendance = employees.slice(0, 4).map(emp => ({
-    name: emp.name,
-    department: emp.department,
-    dailyWage: emp.dailyWage,
-    status: Math.random() > 0.2 ? "Present" : "Absent"
-  }));
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // Fetch employees
+      const { data: employeeData } = await supabase
+        .from("employees")
+        .select("id, name, department, daily_wage");
+
+      if (employeeData) {
+        setEmployees(employeeData);
+        
+        // Calculate department statistics
+        const deptStats = employeeData.reduce((acc: any, emp) => {
+          if (!acc[emp.department]) {
+            acc[emp.department] = {
+              name: emp.department,
+              employee_count: 0,
+              total_payroll: 0
+            };
+          }
+          acc[emp.department].employee_count += 1;
+          acc[emp.department].total_payroll += emp.daily_wage * 7; // Weekly payroll
+          return acc;
+        }, {});
+        
+        setDepartments(Object.values(deptStats));
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const totalEmployees = employees.length;
+  const totalDepartments = departments.length;
+  const totalWeeklyPayroll = departments.reduce((total, dept) => total + dept.total_payroll, 0);
+  const presentToday = Math.floor(totalEmployees * 0.85); // Mock attendance data
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
-        <p className="text-muted-foreground">Welcome to Interbuild Construction Management System</p>
+        <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Dashboard Overview
+        </h2>
+        <p className="text-muted-foreground">
+          Welcome to your employee management system dashboard
+        </p>
       </div>
 
       {/* Key Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center">
-            <Users className="h-8 w-8 text-primary" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Total Employees</p>
-              <p className="text-2xl font-bold text-foreground">{totalEmployees}</p>
-            </div>
-          </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-l-4 border-l-primary bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-lg transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-primary">Total Employees</CardTitle>
+            <Users className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{totalEmployees}</div>
+            <p className="text-xs text-muted-foreground">
+              Across all departments
+            </p>
+          </CardContent>
         </Card>
 
-        <Card className="p-6">
-          <div className="flex items-center">
-            <Calendar className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Present Today</p>
-              <p className="text-2xl font-bold text-foreground">{presentToday}</p>
-            </div>
-          </div>
+        <Card className="border-l-4 border-l-secondary bg-gradient-to-br from-secondary/5 to-secondary/10 hover:shadow-lg transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-secondary">Present Today</CardTitle>
+            <UserCheck className="h-4 w-4 text-secondary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-secondary">{presentToday}</div>
+            <p className="text-xs text-muted-foreground">
+              {totalEmployees > 0 ? ((presentToday / totalEmployees) * 100).toFixed(1) : 0}% attendance
+            </p>
+          </CardContent>
         </Card>
 
-        <Card className="p-6">
-          <div className="flex items-center">
-            <Building2 className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Active Departments</p>
-              <p className="text-2xl font-bold text-foreground">{totalDepartments}</p>
-            </div>
-          </div>
+        <Card className="border-l-4 border-l-accent bg-gradient-to-br from-accent/5 to-accent/10 hover:shadow-lg transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-accent">Active Departments</CardTitle>
+            <Building2 className="h-4 w-4 text-accent" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-accent">{totalDepartments}</div>
+            <p className="text-xs text-muted-foreground">
+              Operational departments
+            </p>
+          </CardContent>
         </Card>
 
-        <Card className="p-6">
-          <div className="flex items-center">
-            <DollarSign className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Weekly Payroll</p>
-              <p className="text-2xl font-bold text-foreground">KES {totalWeeklyPayroll.toLocaleString()}</p>
-            </div>
-          </div>
+        <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-lg transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-green-700">Weekly Payroll</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-700">KSh {totalWeeklyPayroll.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              This week's total
+            </p>
+          </CardContent>
         </Card>
       </div>
 
-      {/* All Departments Overview */}
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">All Departments Overview</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 font-medium text-muted-foreground">Department</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Employees</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Weekly Payroll (KES)</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {departmentStats.map((dept, index) => (
-                <tr key={index} className="border-b">
-                  <td className="py-3 font-medium text-foreground">{dept.name}</td>
-                  <td className="py-3 text-foreground">{dept.count}</td>
-                  <td className="py-3 text-foreground">KES {dept.totalPayroll.toLocaleString()}</td>
-                  <td className="py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      dept.count > 0 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {dept.count > 0 ? 'Active' : 'No Staff'}
-                    </span>
-                  </td>
-                </tr>
+      {/* Department Overview */}
+      <Card className="border-t-4 border-t-primary bg-gradient-to-br from-white to-primary/5">
+        <CardHeader>
+          <CardTitle className="text-primary">Department Overview</CardTitle>
+          <CardDescription>
+            Summary of all departments and their payroll statistics
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-primary font-semibold">Department</TableHead>
+                <TableHead className="text-primary font-semibold">Employees</TableHead>
+                <TableHead className="text-primary font-semibold">Weekly Payroll (KSh)</TableHead>
+                <TableHead className="text-primary font-semibold">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {departments.map((dept, index) => (
+                <TableRow key={index} className="hover:bg-primary/5 transition-colors">
+                  <TableCell className="font-medium">{dept.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-secondary" />
+                      {dept.employee_count}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-green-700">
+                    {dept.total_payroll.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={dept.employee_count > 0 ? "default" : "secondary"}
+                      className={dept.employee_count > 0 ? "bg-secondary text-white" : ""}
+                    >
+                      {dept.employee_count > 0 ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+              {departments.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    No departments found. Add employees to see department statistics.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
 
-      {/* Today's Attendance Sample */}
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Today's Attendance (Sample)</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 font-medium text-muted-foreground">Employee</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Department</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Daily Wage (KES)</th>
-                <th className="text-left py-2 font-medium text-muted-foreground">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todayAttendance.map((emp, index) => (
-                <tr key={index} className="border-b">
-                  <td className="py-3 font-medium text-foreground">{emp.name}</td>
-                  <td className="py-3 text-foreground">{emp.department}</td>
-                  <td className="py-3 text-foreground">KES {emp.dailyWage.toLocaleString()}</td>
-                  <td className="py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      emp.status === 'Present' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {emp.status}
-                    </span>
-                  </td>
-                </tr>
+      {/* Recent Employees Sample */}
+      <Card className="border-t-4 border-t-secondary bg-gradient-to-br from-white to-secondary/5">
+        <CardHeader>
+          <CardTitle className="text-secondary">Recent Employees</CardTitle>
+          <CardDescription>
+            Latest employees added to the system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-secondary font-semibold">Employee</TableHead>
+                <TableHead className="text-secondary font-semibold">Department</TableHead>
+                <TableHead className="text-secondary font-semibold">Daily Wage (KSh)</TableHead>
+                <TableHead className="text-secondary font-semibold">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {employees.slice(0, 5).map((emp) => (
+                <TableRow key={emp.id} className="hover:bg-secondary/5 transition-colors">
+                  <TableCell className="font-medium">{emp.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="border-secondary text-secondary">
+                      {emp.department}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-green-700">
+                    {emp.daily_wage.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="default" className="bg-primary text-white">
+                      Active
+                    </Badge>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+              {employees.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    No employees found. Add employees to see them here.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
     </div>
   );
