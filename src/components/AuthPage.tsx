@@ -7,29 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { User, Session } from "@supabase/supabase-js";
-
-interface AuthPageProps {
-  onLogin: (user: User, session: Session) => void;
-}
-
-export const AuthPage = ({ onLogin }: AuthPageProps) => {
+export const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        onLogin(session.user, session);
-      }
-    };
-    checkSession();
-  }, [onLogin]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +51,6 @@ export const AuthPage = ({ onLogin }: AuthPageProps) => {
           return;
         }
 
-        onLogin(data.user, data.session);
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",

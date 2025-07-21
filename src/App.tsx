@@ -3,24 +3,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { AuthPage } from './components/AuthPage';
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { User, Session } from '@supabase/supabase-js';
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const { user, loading } = useAuth();
-  const [authenticatedUser, setAuthenticatedUser] = useState<User | null>(null);
-  const [userSession, setUserSession] = useState<Session | null>(null);
-
-  const handleLogin = (user: User, session: Session) => {
-    setAuthenticatedUser(user);
-    setUserSession(session);
-  };
 
   if (loading) {
     return (
@@ -37,13 +28,13 @@ const App = () => {
     );
   }
 
-  if (!user && !authenticatedUser) {
+  if (!user) {
     return (
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <AuthPage onLogin={handleLogin} />
+          <AuthPage />
         </TooltipProvider>
       </QueryClientProvider>
     );
