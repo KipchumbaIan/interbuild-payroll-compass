@@ -40,7 +40,7 @@ const AttendanceTracking = () => {
     emp.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAttendanceToggle = (employeeId: number, dayIndex: number, present: boolean) => {
+  const handleAttendanceToggle = (employeeId: string, dayIndex: number, present: boolean) => {
     const key = `${employeeId}-${dayIndex}`;
     setAttendance(prev => ({
       ...prev,
@@ -48,23 +48,23 @@ const AttendanceTracking = () => {
     }));
   };
 
-  const isPresent = (employeeId: number, dayIndex: number) => {
+  const isPresent = (employeeId: string, dayIndex: number) => {
     const key = `${employeeId}-${dayIndex}`;
     return attendance[key] === true;
   };
 
-  const isAbsent = (employeeId: number, dayIndex: number) => {
+  const isAbsent = (employeeId: string, dayIndex: number) => {
     const key = `${employeeId}-${dayIndex}`;
     return attendance[key] === false;
   };
 
-  const getPresentDaysCount = (employeeId: number) => {
+  const getPresentDaysCount = (employeeId: string) => {
     return daysOfWeek.reduce((count, _, dayIndex) => {
       return count + (isPresent(employeeId, dayIndex) ? 1 : 0);
     }, 0);
   };
 
-  const getWeeklyPay = (employeeId: number, dailyWage: number) => {
+  const getWeeklyPay = (employeeId: string, dailyWage: number) => {
     const presentDays = getPresentDaysCount(employeeId);
     return presentDays * dailyWage;
   };

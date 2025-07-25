@@ -75,6 +75,7 @@ export type Database = {
       }
       employees: {
         Row: {
+          contacts: string | null
           created_at: string
           created_by: string | null
           daily_wage: number
@@ -87,6 +88,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contacts?: string | null
           created_at?: string
           created_by?: string | null
           daily_wage: number
@@ -99,6 +101,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contacts?: string | null
           created_at?: string
           created_by?: string | null
           daily_wage?: number

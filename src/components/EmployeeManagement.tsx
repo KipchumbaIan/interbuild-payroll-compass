@@ -4,15 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Search, Users, Building2 } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Users, Building2, Save, X } from "lucide-react";
 import { useEmployeeContext } from "@/contexts/EmployeeContext";
+import { useToast } from "@/hooks/use-toast";
 
 const EmployeeManagement = () => {
-  const { employees, departments, addEmployee, removeEmployee, getDepartmentStats } = useEmployeeContext();
+  const { employees, departments, loading, addEmployee, removeEmployee, updateEmployee, getDepartmentStats } = useEmployeeContext();
+  const { toast } = useToast();
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
   const [newEmployee, setNewEmployee] = useState({
+    name: "",
+    idNumber: "",
+    department: "",
+    dailyWage: "",
+    dateEmployed: "",
+    contacts: "",
+  });
+  const [editEmployee, setEditEmployee] = useState({
     name: "",
     idNumber: "",
     department: "",
@@ -26,28 +37,110 @@ const EmployeeManagement = () => {
     emp.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddEmployee = () => {
+  const handleAddEmployee = async () => {
     if (newEmployee.name && newEmployee.idNumber && newEmployee.department && newEmployee.contacts) {
-      addEmployee({
-        ...newEmployee,
-        dailyWage: parseInt(newEmployee.dailyWage),
-        profilePhoto: "/placeholder.svg",
-      });
-      setNewEmployee({
-        name: "",
-        idNumber: "",
-        department: "",
-        dailyWage: "",
-        dateEmployed: "",
-        contacts: "",
-      });
-      setShowAddForm(false);
+      try {
+        await addEmployee({
+          ...newEmployee,
+          dailyWage: parseInt(newEmployee.dailyWage),
+          profilePhoto: "/placeholder.svg",
+        });
+        setNewEmployee({
+          name: "",
+          idNumber: "",
+          department: "",
+          dailyWage: "",
+          dateEmployed: "",
+          contacts: "",
+        });
+        setShowAddForm(false);
+        toast({
+          title: "Success",
+          description: "Employee added successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add employee",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleDeleteEmployee = (id: number) => {
-    removeEmployee(id);
+  const handleDeleteEmployee = async (id: string) => {
+    try {
+      await removeEmployee(id);
+      toast({
+        title: "Success",
+        description: "Employee deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete employee",
+        variant: "destructive",
+      });
+    }
   };
+
+  const handleEditEmployee = (employee: any) => {
+    setEditingEmployee(employee.id);
+    setEditEmployee({
+      name: employee.name,
+      idNumber: employee.idNumber,
+      department: employee.department,
+      dailyWage: employee.dailyWage.toString(),
+      dateEmployed: employee.dateEmployed,
+      contacts: employee.contacts,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingEmployee) {
+      try {
+        await updateEmployee(editingEmployee, {
+          name: editEmployee.name,
+          idNumber: editEmployee.idNumber,
+          department: editEmployee.department,
+          dailyWage: parseInt(editEmployee.dailyWage),
+          dateEmployed: editEmployee.dateEmployed,
+          contacts: editEmployee.contacts,
+        });
+        setEditingEmployee(null);
+        toast({
+          title: "Success",
+          description: "Employee updated successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update employee",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingEmployee(null);
+    setEditEmployee({
+      name: "",
+      idNumber: "",
+      department: "",
+      dailyWage: "",
+      dateEmployed: "",
+      contacts: "",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const departmentStats = getDepartmentStats();
 
@@ -208,39 +301,117 @@ const EmployeeManagement = () => {
           
           return (
             <Card key={employee.id} className={`p-6 shadow-md border-l-4 ${cardColors[deptIndex % cardColors.length]}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <img
-                    src={employee.profilePhoto}
-                    alt={employee.name}
-                    className="w-16 h-16 rounded-full bg-muted border-4 border-white shadow-md"
-                  />
-                  <div>
-                    <h3 className="font-semibold text-lg text-foreground">{employee.name}</h3>
-                    <p className="text-sm text-muted-foreground">ID: {employee.idNumber}</p>
-                    <p className="text-sm text-muted-foreground">Contact: {employee.contacts}</p>
-                    <p className="text-sm font-medium text-blue-600">{employee.department}</p>
+              {editingEmployee === employee.id ? (
+                // Edit mode
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Name</Label>
+                      <Input
+                        value={editEmployee.name}
+                        onChange={(e) => setEditEmployee({...editEmployee, name: e.target.value})}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">ID Number</Label>
+                      <Input
+                        value={editEmployee.idNumber}
+                        onChange={(e) => setEditEmployee({...editEmployee, idNumber: e.target.value})}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Contact</Label>
+                      <Input
+                        value={editEmployee.contacts}
+                        onChange={(e) => setEditEmployee({...editEmployee, contacts: e.target.value})}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Department</Label>
+                      <select
+                        value={editEmployee.department}
+                        onChange={(e) => setEditEmployee({...editEmployee, department: e.target.value})}
+                        className="w-full p-2 border border-input rounded-md bg-background mt-1"
+                      >
+                        {departments.map(dept => (
+                          <option key={dept.name} value={dept.name}>{dept.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Daily Wage</Label>
+                      <Input
+                        type="number"
+                        value={editEmployee.dailyWage}
+                        onChange={(e) => setEditEmployee({...editEmployee, dailyWage: e.target.value})}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Date Employed</Label>
+                      <Input
+                        type="date"
+                        value={editEmployee.dateEmployed}
+                        onChange={(e) => setEditEmployee({...editEmployee, dateEmployed: e.target.value})}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button variant="outline" onClick={handleCancelEdit}>
+                      <X className="w-4 h-4 mr-2" />
+                      Cancel
+                    </Button>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-green-600">KES {employee.dailyWage.toLocaleString()}/day</p>
-                  <p className="text-sm text-muted-foreground">Since: {employee.dateEmployed}</p>
-                  <p className="text-sm font-medium text-purple-600">Weekly: KES {(employee.dailyWage * 7).toLocaleString()}</p>
+              ) : (
+                // View mode
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={employee.profilePhoto}
+                      alt={employee.name}
+                      className="w-16 h-16 rounded-full bg-muted border-4 border-white shadow-md"
+                    />
+                    <div>
+                      <h3 className="font-semibold text-lg text-foreground">{employee.name}</h3>
+                      <p className="text-sm text-muted-foreground">ID: {employee.idNumber}</p>
+                      <p className="text-sm text-muted-foreground">Contact: {employee.contacts}</p>
+                      <p className="text-sm font-medium text-blue-600">{employee.department}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-600">KES {employee.dailyWage.toLocaleString()}/day</p>
+                    <p className="text-sm text-muted-foreground">Since: {employee.dateEmployed}</p>
+                    <p className="text-sm font-medium text-purple-600">Weekly: KES {(employee.dailyWage * 7).toLocaleString()}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleEditEmployee(employee)}
+                      className="hover:bg-blue-100"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDeleteEmployee(employee.id)}
+                      className="hover:bg-red-100 text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="hover:bg-blue-100">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDeleteEmployee(employee.id)}
-                    className="hover:bg-red-100 text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+              )}
             </Card>
           );
         })}
