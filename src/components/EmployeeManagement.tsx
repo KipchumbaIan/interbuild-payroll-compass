@@ -18,6 +18,7 @@ const EmployeeManagement = () => {
     department: "",
     dailyWage: "",
     dateEmployed: "",
+    contacts: "",
   });
 
   const filteredEmployees = employees.filter(emp =>
@@ -26,7 +27,7 @@ const EmployeeManagement = () => {
   );
 
   const handleAddEmployee = () => {
-    if (newEmployee.name && newEmployee.idNumber && newEmployee.department) {
+    if (newEmployee.name && newEmployee.idNumber && newEmployee.department && newEmployee.contacts) {
       addEmployee({
         ...newEmployee,
         dailyWage: parseInt(newEmployee.dailyWage),
@@ -38,6 +39,7 @@ const EmployeeManagement = () => {
         department: "",
         dailyWage: "",
         dateEmployed: "",
+        contacts: "",
       });
       setShowAddForm(false);
     }
@@ -133,6 +135,16 @@ const EmployeeManagement = () => {
               />
             </div>
             <div>
+              <Label htmlFor="contacts" className="text-sm font-medium">Contact Number</Label>
+              <Input
+                id="contacts"
+                value={newEmployee.contacts}
+                onChange={(e) => setNewEmployee({...newEmployee, contacts: e.target.value})}
+                placeholder="Enter phone number"
+                className="mt-1"
+              />
+            </div>
+            <div>
               <Label htmlFor="department" className="text-sm font-medium">Department</Label>
               <select
                 id="department"
@@ -206,6 +218,7 @@ const EmployeeManagement = () => {
                   <div>
                     <h3 className="font-semibold text-lg text-foreground">{employee.name}</h3>
                     <p className="text-sm text-muted-foreground">ID: {employee.idNumber}</p>
+                    <p className="text-sm text-muted-foreground">Contact: {employee.contacts}</p>
                     <p className="text-sm font-medium text-blue-600">{employee.department}</p>
                   </div>
                 </div>

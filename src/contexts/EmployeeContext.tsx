@@ -9,6 +9,7 @@ export interface Employee {
   dailyWage: number;
   dateEmployed: string;
   profilePhoto: string;
+  contacts: string;
 }
 
 export interface Department {
@@ -58,6 +59,7 @@ export const EmployeeProvider = ({ children }: { children: ReactNode }) => {
       dailyWage: 1800, // KES 1,800
       dateEmployed: "2023-01-15",
       profilePhoto: "/placeholder.svg",
+      contacts: "+254712345678",
     },
     {
       id: 2,
@@ -67,6 +69,7 @@ export const EmployeeProvider = ({ children }: { children: ReactNode }) => {
       dailyWage: 2000, // KES 2,000
       dateEmployed: "2023-02-20",
       profilePhoto: "/placeholder.svg",
+      contacts: "+254712345679",
     },
     {
       id: 3,
@@ -76,6 +79,7 @@ export const EmployeeProvider = ({ children }: { children: ReactNode }) => {
       dailyWage: 1700, // KES 1,700
       dateEmployed: "2023-03-10",
       profilePhoto: "/placeholder.svg",
+      contacts: "+254712345680",
     },
     {
       id: 4,
@@ -85,6 +89,7 @@ export const EmployeeProvider = ({ children }: { children: ReactNode }) => {
       dailyWage: 1600, // KES 1,600
       dateEmployed: "2023-04-05",
       profilePhoto: "/placeholder.svg",
+      contacts: "+254712345681",
     },
     {
       id: 5,
@@ -94,6 +99,7 @@ export const EmployeeProvider = ({ children }: { children: ReactNode }) => {
       dailyWage: 1400, // KES 1,400
       dateEmployed: "2023-05-12",
       profilePhoto: "/placeholder.svg",
+      contacts: "+254712345682",
     },
     {
       id: 6,
@@ -103,6 +109,7 @@ export const EmployeeProvider = ({ children }: { children: ReactNode }) => {
       dailyWage: 1850, // KES 1,850
       dateEmployed: "2023-06-18",
       profilePhoto: "/placeholder.svg",
+      contacts: "+254712345683",
     },
     {
       id: 7,
@@ -112,6 +119,7 @@ export const EmployeeProvider = ({ children }: { children: ReactNode }) => {
       dailyWage: 1550, // KES 1,550
       dateEmployed: "2023-07-22",
       profilePhoto: "/placeholder.svg",
+      contacts: "+254712345684",
     },
   ]);
 
